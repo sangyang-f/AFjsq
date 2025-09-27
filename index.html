@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AF计算器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            line-height: 1.6;
+            padding: 15px;
+            min-height: 100vh;
+            touch-action: manipulation;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #165DFF 0%, #0A2463 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .subtitle {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            position: relative;
+        }
+
+        /* 选项卡容器样式 */
+        .tabs-container {
+            position: relative;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            overflow: hidden;
+        }
+
+        .tabs-scroll-indicator {
+            position: absolute;
+            bottom: 2px;
+            height: 3px;
+            background: #165DFF;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+            opacity: 0.7;
+            z-index: 10;
+        }
+
+        .tabs {
+            display: flex;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            padding-bottom: 5px;
+            scroll-behavior: smooth;
+        }
+
+        .tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab {
+            flex: 0 0 auto;
+            padding: 16px 20px;
+            min-width: 120px;
+            text-align: center;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            white-space: nowrap;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 56px;
+        }
+
+        .tab i {
+            font-size: 1rem;
+        }
+
+        .tab.active {
+            background: white;
+            color: #165DFF;
+            border-bottom: 3px solid #165DFF;
+        }
+
+        .tab:not(.active):hover {
+            background: #f0f2f5;
+            color: #0A2463;
+        }
+
+        /* 内容区域 */
+        .tab-content {
+            display: none;
+            padding: 25px;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 表单元素 */
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2D3748;
+            font-size: 0.95rem;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 16px;
+            border: 1px solid #CBD5E0;
+            border-radius: 10px;
+            font-size: 16px;
+            background-color: white;
+            transition: all 0.3s ease;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #165DFF;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.15);
+        }
+
+        /* 按钮样式 */
+        button {
+            background: #165DFF;
+            color: white;
+            border: none;
+            padding: 18px 20px;
+            border-radius: 10px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 60px;
+        }
+
+        button:hover {
+            background: #0A2463;
+        }
+
+        /* 结果卡片 */
+        .result-card {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-value {
+            font-weight: 600;
+            color: #165DFF;
+        }
+
+        /* 科研数据样式 */
+        .research-group {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border-left: 4px solid #165DFF;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .research-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2D3748;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .research-title i {
+            color: #165DFF;
+        }
+
+        .research-result {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px dashed #e2e8f0;
+        }
+
+        /* 火箭选择器 */
+        .rocket-selector-title {
+            margin: 20px 0 10px;
+            font-weight: 600;
+            color: #2D3748;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rocket-selector-title i {
+            color: #165DFF;
+        }
+
+        /* 双配置比较 */
+        .q-levels-container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .q-level-group {
+            flex: 1;
+        }
+
+        .results-comparison {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .result-column {
+            flex: 1;
+            min-width: 280px;
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .result-column h4 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2D3748;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        /* 火箭特定字段 */
+        .rocket-specific {
+            display: none;
+        }
+
+        /* 响应式设计 */
+        @media (min-width: 768px) {
+            .container {
+                max-width: 750px;
+                margin: 30px auto;
+            }
+
+            .tab {
+                flex: 1;
+                min-width: auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+
+            .q-levels-container,
+            .results-comparison {
+                flex-direction: column;
+            }
+
+            .tab {
+                min-width: 100px;
+                padding: 14px 12px;
+                font-size: 14px;
+            }
+
+            .tab i {
+                font-size: 0.9rem;
+            }
+
+            .result-column {
+                min-width: 100%;
+                margin-bottom: 15px;
+            }
+
+            h1 {
+                font-size: 1.6rem;
+            }
+
+            .tab-content {
+                padding: 18px;
+            }
+
+            input,
+            select {
+                padding: 14px;
+            }
+
+            button {
+                padding: 16px;
+            }
+        }
+
+        /* 触摸反馈效果 */
+        .touch-feedback {
+            transition: transform 0.1s ease;
+        }
+
+        .touch-feedback:active {
+            transform: scale(0.97);
+            opacity: 0.8;
+        }
+
+        /* 数值变化动画 */
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .value-changed {
+            animation: pulse 0.5s ease;
+        }
+
+        /* 高亮样式 */
+        .result-column.profit-highlight {
+            box-shadow: 0 0 0 2px #38B2AC, 0 8px 20px rgba(56, 178, 172, 0.15);
+            border-color: #38B2AC;
+        }
+
+        .result-column.equal-highlight {
+            box-shadow: 0 0 0 2px #ED8936, 0 8px 20px rgba(237, 137, 54, 0.1);
+            border-color: #ED8936;
+        }
+
+        .section-title {
+            margin: 25px 0 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e2e8f0;
+            color: #2D3748;
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: #165DFF;
+            font-size: 1.2em;
+        }
+
+        /* 最高品质卡片样式 */
+        .max-quality-card {
+            background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+            border: 1px solid #91d5ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .max-quality-label {
+            font-weight: 600;
+            color: #0050b3;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+        }
+
+        .max-quality-label i {
+            font-size: 1.1em;
+            color: #096dd9;
+        }
+
+        .max-quality-value {
+            font-weight: 700;
+            font-size: 1.2em;
+            color: #096dd9;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 6px 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(24, 144, 255, 0.2);
+        }
+
+        /* 订单计算卡片样式 */
+        #order-calculation .research-group {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #a0c4ff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-left: 1px solid #a0c4ff;
+        }
+
+        /* 火箭项目样式 */
+        .rocket-item {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #e2e8f0;
+            position: relative;
+        }
+
+        .rocket-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 600;
+            color: #2D3748;
+        }
+
+        .remove-rocket {
+            background: transparent;
+            border: none;
+            color: #718096;
+            cursor: pointer;
+            padding: 5px;
+            width: auto;
+            min-height: auto;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .remove-rocket:hover {
+            background: #f0f2f5;
+            color: #E53E3E;
+        }
+
+        .rocket-item-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        /* 添加火箭类型按钮样式 */
+        #order-calculation .touch-feedback[onclick="addRocketItem()"] {
+            background: #4dabf7;
+        }
+
+        #order-calculation .touch-feedback[onclick="addRocketItem()"]:hover {
+            background: #339af0;
+        }
+
+        /* 配置项目样式 */
+        .config-item {
+            margin-bottom: 15px;
+        }
+
+        .config-item:last-child {
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 480px) {
+            .max-quality-card {
+                padding: 12px;
+                flex-direction: row;
+            }
+
+            .max-quality-label {
+                font-size: 0.9rem;
+            }
+
+            .max-quality-value {
+                font-size: 1rem;
+                padding: 6px 12px;
+            }
+
+            .rocket-item-content {
+                grid-template-columns: 1fr;
+            }
+
+            .rocket-item {
+                padding: 12px;
+            }
+        }
+
+        /* 新增：燃料类型特定样式 */
+        .fuel-only {
+            background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%);
+            border: 1px solid #b7eb8f;
+        }
+
+        .fuel-only .section-title i {
+            color: #52c41a;
+        }
+
+        /* 新增：结果列表样式 */
+        .results-list {
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .result-row:hover {
+            background-color: #f8fafc;
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+        }
+
+        .result-combination {
+            font-weight: 600;
+            color: #2D3748;
+        }
+
+        .result-profit {
+            font-weight: 600;
+            color: #38A169;
+        }
+
+        .result-row.best {
+            background-color: #f0fff4;
+            border-left: 4px solid #38A169;
+        }
+
+        .result-details {
+            display: none;
+            padding: 15px;
+            background-color: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .result-details.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* 加载指示器 */
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #165DFF;
+        }
+
+        .loader i {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        /* 简写样式 */
+        .rocket-short {
+            display: inline-block;
+            padding: 2px 6px;
+            background: #ebf8ff;
+            border-radius: 4px;
+            font-weight: 600;
+            color: #3182ce;
+            margin: 0 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>AF计算器</h1>
+        </header>
+
+        <div class="tabs-container">
+            <div class="tabs-scroll-indicator" id="scroll-indicator"></div>
+            <div class="tabs" id="tabs-container">
+                <div class="tab active touch-feedback" data-index="0">
+                    <i class="fas fa-flask"></i> 科研数据
+                </div>
+                <div class="tab touch-feedback" data-index="1">
+                    <i class="fas fa-coins"></i> 成本数据
+                </div>
+                <div class="tab touch-feedback" data-index="2">
+                    <i class="fas fa-cogs"></i> 火箭制造
+                </div>
+                <div class="tab touch-feedback" data-index="3">
+                    <i class="fas fa-rocket"></i> 火箭发射
+                </div>
+                <div class="tab touch-feedback" data-index="4">
+                    <i class="fas fa-calculator"></i> 订单计算
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content active" id="research-data">
+            <h2 class="section-title">
+                <i class="fas fa-flask"></i> 科研数据设置（按需设置保存）
+            </h2>
+
+            <div class="research-group">
+                <div class="research-title">
+                    <i class="fas fa-lightbulb"></i> 基础研究
+                </div>
+
+                <div class="form-group">
+                    <label for="basic-math-level">基础数理等级</label>
+                    <input type="number" id="basic-math-level" value="0" min="0">
+                </div>
+
+                <div class="form-group">
+                    <label for="manufacturing-level">制造工艺等级</label>
+                    <input type="number" id="manufacturing-level" value="0" min="0">
+                </div>
+            </div>
+
+            <div class="research-group">
+                <div class="research-title">
+                    <i class="fas fa-rocket"></i> 航天研究
+                </div>
+
+                <div class="form-group">
+                    <label for="propulsion-level">推进系统等级</label>
+                    <input type="number" id="propulsion-level" value="0" min="0">
+                </div>
+
+                <div class="form-group">
+                    <label for="orbital-level">轨道力学等级</label>
+                    <input type="number" id="orbital-level" value="0" min="0">
+                </div>
+
+                <div class="form-group">
+                    <label for="attitude-level">姿态力学等级</label>
+                    <input type="number" id="attitude-level" value="0" min="0">
+                </div>
+            </div>
+
+            <button class="touch-feedback" onclick="saveResearchData()">
+                <i class="fas fa-save"></i> 保存科研数据
+            </button>
+
+            <div class="research-result">
+                <h3 class="section-title">
+                    <i class="fas fa-chart-line"></i> 研究效果
+                </h3>
+
+                <div class="result-item">
+                    <span>生产速度提升:</span>
+                    <span id="production-speed-boost" class="result-value">0</span>
+                </div>
+                <div class="result-item">
+                    <span>航天类研究效率提升:</span>
+                    <span id="research-efficiency-boost" class="result-value">0</span>
+                </div>
+
+                <div class="result-item">
+                    <span>亚轨道火箭生产技术:</span>
+                    <span id="suborbital-production" class="result-value">0</span>
+                </div>
+
+                <div class="result-item">
+                    <span>运载火箭生产技术:</span>
+                    <span id="orbital-production" class="result-value">0</span>
+                </div>
+
+                <div class="result-item">
+                    <span>亚轨道火箭发射专业知识:</span>
+                    <span id="suborbital-knowledge" class="result-value">0</span>
+                </div>
+
+                <div class="result-item">
+                    <span>运载火箭发射专业知识:</span>
+                    <span id="orbital-knowledge" class="result-value">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="basic-data">
+            <h2 class="section-title">
+                <i class="fas fa-coins"></i> 成本数据设置（按需设置保存）
+            </h2>
+
+            <div class="form-group">
+                <label for="rocket-type-basic">类型</label>
+                <select id="rocket-type-basic" onchange="toggleRocketSpecificFields()">
+                    <option value="fuel">燃料</option>
+                    <option value="sr">SR探空火箭</option>
+                    <option value="slv">SLV小型运载火箭</option>
+                    <option value="mlv">MLV中型运载火箭</option>
+                    <option value="llv">LLV大型运载火箭</option>
+                    <option value="hlv">HLV重型运载火箭</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="q0-cost">Q0造价 ($)</label>
+                <input type="number" id="q0-cost" value="280">
+            </div>
+
+            <div class="form-group">
+                <label for="quality-add">品质造价 ($)</label>
+                <input type="number" id="quality-add" value="0">
+            </div>
+
+            <div class="form-group">
+                <label for="time-per-h">制造时间（H）</label>
+                <input type="number" id="time-per-h" value="0.0041667" step="0.0001">
+            </div>
+
+            <div class="form-group">
+                <label for="time-cost">时薪 ($) </label>
+                <input type="number" id="time-cost" value="2000">
+            </div>
+
+            <!-- 火箭特定字段 -->
+            <div class="rocket-specific" id="rocket-specific-fields">
+                <div class="form-group">
+                    <label for="launch-time">发射时间（H）</label>
+                    <input type="number" id="launch-time" value="0.25" step="0.01">
+                </div>
+
+                <div class="form-group">
+                    <label for="fuel-consumption">所需燃料</label>
+                    <input type="number" id="fuel-consumption" value="30">
+                </div>
+
+                <div class="form-group">
+                    <label for="expected-research">预期获得航天研究资料</label>
+                    <input type="number" id="expected-research" value="260">
+                </div>
+            </div>
+
+            <button class="touch-feedback" onclick="saveRocketData()">
+                <i class="fas fa-save"></i> 保存成本数据
+            </button>
+        </div>
+
+        <div class="tab-content" id="manufacturing-calculation">
+            <h2 class="section-title">
+                <i class="fas fa-cogs"></i> 火箭制造数据
+            </h2>
+
+            <div class="form-group">
+                <label for="manufacture-rocket-type">火箭类型</label>
+                <select id="manufacture-rocket-type" onchange="updateManufacturingCalculation()">
+                    <option value="sr">SR探空火箭</option>
+                    <option value="slv">SLV小型运载火箭</option>
+                    <option value="mlv">MLV中型运载火箭</option>
+                    <option value="llv">LLV大型运载火箭</option>
+                    <option value="hlv">HLV重型运载火箭</option>
+                </select>
+            </div>
+
+            <div class="max-quality-card">
+                <div class="max-quality-label">
+                    <i class="fas fa-crown"></i> 可制造最高品质
+                </div>
+                <div id="max-quality" class="max-quality-value">Q0</div>
+            </div>
+
+            <div class="form-group">
+                <label for="manufacture-q-level">品质等级</label>
+                <input type="number" id="manufacture-q-level" value="0" min="0"
+                    oninput="updateManufacturingCalculation()">
+            </div>
+
+            <div class="result-card">
+                <h3>计算结果</h3>
+                <div class="result-item">
+                    <span>Q0造价:</span>
+                    <span id="manufacture-q0-cost" class="result-value">0 $</span>
+                </div>
+                <div class="result-item">
+                    <span>品质造价:</span>
+                    <span id="manufacture-quality-cost" class="result-value">0 $</span>
+                </div>
+                <div class="result-item">
+                    <span>时薪:</span>
+                    <span id="manufacture-time-cost" class="result-value">0 $</span>
+                </div>
+                <div class="result-item">
+                    <span>制造时间:</span>
+                    <span id="manufacture-time" class="result-value">0 H</span>
+                </div>
+                <div class="result-item">
+                    <span>加Q成本:</span>
+                    <span id="manufacture-q-cost" class="result-value">0 $</span>
+                </div>
+                <div class="result-item">
+                    <span>制造成本:</span>
+                    <span id="manufacture-cost" class="result-value">0 $</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="rocket-launch-calculation">
+            <h2 class="section-title">
+                <i class="fas fa-rocket"></i> 火箭发射数据
+            </h2>
+
+            <div class="form-group">
+                <label for="launch-rocket-type">火箭类型</label>
+                <select id="launch-rocket-type" onchange="updateLaunchCalculation()">
+                    <option value="sr">SR探空火箭</option>
+                    <option value="slv">SLV小型运载火箭</option>
+                    <option value="mlv">MLV中型运载火箭</option>
+                    <option value="llv">LLV大型运载火箭</option>
+                    <option value="hlv">HLV重型运载火箭</option>
+                </select>
+            </div>
+
+            <div class="max-quality-card">
+                <div class="max-quality-label">
+                    <i class="fas fa-crown"></i> 可制造最高品质
+                </div>
+                <div id="launch-max-quality" class="max-quality-value">Q0</div>
+            </div>
+
+            <div class="form-group">
+                <label for="launch-q-level">品质等级</label>
+                <input type="number" id="launch-q-level" value="0" min="0" oninput="updateLaunchCalculation()">
+            </div>
+
+            <div class="result-card">
+                <h3>计算结果</h3>
+                <div class="result-item">
+                    <span>所需燃料:</span>
+                    <span id="launch-fuel-display" class="result-value">0</span>
+                </div>
+                <div class="result-item">
+                    <span>时薪:</span>
+                    <span id="launch-salary" class="result-value">0 $</span>
+                </div>
+                <div class="result-item">
+                    <span>发射时间:</span>
+                    <span id="launch-time-display" class="result-value">0 H</span>
+                </div>
+                <div class="result-item">
+                    <span>发射成本:</span>
+                    <span id="launch-cost" class="result-value">0 $</span>
+                </div>
+                <div class="result-item">
+                    <span>发射成功率:</span>
+                    <span id="launch-success-rate" class="result-value">0%</span>
+                </div>
+                <div class="result-item">
+                    <span>航天研究资料:</span>
+                    <span id="research-gained" class="result-value">0</span>
+                </div>
+                <div class="result-item">
+                    <span>研究资料成本:</span>
+                    <span id="research-cost" class="result-value">0 $/单位</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="order-calculation">
+            <h2 class="section-title">
+                <i class="fas fa-calculator"></i> 销售大楼火箭订单计算
+            </h2>
+
+            <!-- 订单基础信息 -->
+            <div class="research-group">
+                <div class="research-title">
+                    <i class="fas fa-clipboard-list"></i> 订单基础信息
+                </div>
+
+                <div class="form-group">
+                    <label for="time-mode">时间计算模式</label>
+                    <select id="time-mode">
+                        <option value="sum">叠加计算 (单产线)</option>
+                        <option value="max">取最大值 (多产线)</option>
+                    </select>
+                    <!-- 添加的说明文字 -->
+                    <div style="font-size: 0.85rem; color: #718096; margin-top: 8px; line-height: 1.4;">
+                        <i class="fas fa-info-circle"></i> 取最大值时以当前订单填写的火箭之中单个制造最长时间和时薪计算
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="quality-bonus">品质奖励 (%)</label>
+                    <input type="number" id="quality-bonus" value="0" step="0.01">
+                </div>
+
+                <div id="rocket-list">
+                    <!-- 火箭项目将通过JS动态添加 -->
+                    <div class="rocket-item">
+                        <div class="rocket-item-header">
+                            <span>火箭 #1</span>
+                            <button class="remove-rocket" onclick="removeRocketItem(this)">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="rocket-item-content">
+                            <div class="form-group">
+                                <label>火箭类型</label>
+                                <select class="rocket-type-select">
+                                    <option value="sr">SR探空火箭</option>
+                                    <option value="slv">SLV小型运载火箭</option>
+                                    <option value="mlv">MLV中型运载火箭</option>
+                                    <option value="llv">LLV大型运载火箭</option>
+                                    <option value="hlv">HLV重型运载火箭</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>订单单价 ($)</label>
+                                <input type="number" class="rocket-price" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>数量</label>
+                                <input type="number" class="rocket-quantity" value="1" min="1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="touch-feedback" onclick="addRocketItem()" style="margin-top: 15px;">
+                    <i class="fas fa-plus"></i> 添加火箭类型
+                </button>
+            </div>
+
+            <button class="touch-feedback" onclick="calculateAllQualityCombinations()">
+                <i class="fas fa-calculator"></i> 计算利润
+            </button>
+
+            <!-- 加载指示器 -->
+            <div class="loader" id="calculation-loader">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>正在计算所有品质组合，请稍候...</p>
+            </div>
+
+            <!-- 推荐组合 -->
+            <div class="result-card" id="recommendation-result" style="display: none;">
+                <h3><i class="fas fa-star"></i> 推荐组合</h3>
+                <div class="result-item">
+                    <span>推荐组合:</span>
+                    <span id="recommended-combination" class="result-value">-</span>
+                </div>
+                <div class="result-item">
+                    <span>总加Q成本:</span>
+                    <span id="recommended-total-q-cost" class="result-value">0 $</span>
+                </div>
+                <div class="result-item">
+                    <span>总制造时间:</span>
+                    <span id="recommended-total-time" class="result-value">0 H</span>
+                </div>
+                <div class="result-item">
+                    <span>总制造成本:</span>
+                    <span id="recommended-total-cost" class="result-value">0 $</span>
+                </div>
+                <div class="result-item">
+                    <span>订单总金额:</span>
+                    <span id="recommended-total-amount" class="result-value">0 $</span>
+                </div>
+                <div class="result-item">
+                    <span>预计净利润:</span>
+                    <span id="recommended-total-profit" class="result-value">0 $</span>
+                </div>
+            </div>
+
+            <!-- 结果列表 -->
+            <div class="result-card" id="results-container" style="display: none;">
+                <h3><i class="fas fa-list-ol"></i> 利润排名 (从高到低)</h3>
+                <div class="results-list" id="results-list">
+                    <!-- 结果将通过JS动态添加 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 成本数据存储
+        let rocketData = {
+            fuel: { q0: 280, qualityAdd: 0, timePerH: 0.0041667, timeCost: 2000 },
+            sr: {
+                q0: 50000, qualityAdd: 1000, timePerH: 0.5, timeCost: 2500,
+                launchTime: 0.25, fuelConsumption: 30, expectedResearch: 260
+            },
+            slv: {
+                q0: 160000, qualityAdd: 3200, timePerH: 2, timeCost: 2500,
+                launchTime: 0.5, fuelConsumption: 70, expectedResearch: 800
+            },
+            mlv: {
+                q0: 500000, qualityAdd: 10000, timePerH: 4, timeCost: 2600,
+                launchTime: 1, fuelConsumption: 175, expectedResearch: 2400
+            },
+            llv: {
+                q0: 1150000, qualityAdd: 23000, timePerH: 10, timeCost: 2600,
+                launchTime: 3, fuelConsumption: 280, expectedResearch: 5400
+            },
+            hlv: {
+                q0: 1600000, qualityAdd: 32000, timePerH: 18, timeCost: 2800,
+                launchTime: 5, fuelConsumption: 500, expectedResearch: 7800
+            }
+        };
+
+        // 科研数据存储
+        let researchData = {
+            basicMath: 0,
+            manufacturing: 0,
+            propulsion: 0,
+            orbital: 0,
+            attitude: 0
+        };
+
+        // 当前选择的火箭类型（订单计算页面）
+        let currentRocket = 'sr';
+
+        // 初始化函数
+        document.addEventListener('DOMContentLoaded', function () {
+            initTabs();
+            updateScrollIndicator();
+
+            // 加载保存的数据
+            const savedRocketData = localStorage.getItem('rocketData');
+            if (savedRocketData) {
+                rocketData = JSON.parse(savedRocketData);
+            }
+
+            const savedResearchData = localStorage.getItem('researchData');
+            if (savedResearchData) {
+                researchData = JSON.parse(savedResearchData);
+            }
+
+            loadRocketData();
+            loadResearchData();
+            updateResearchResults();
+            toggleRocketSpecificFields();
+
+            // 初始化制造计算和发射计算
+            updateManufacturingCalculation();
+            updateLaunchCalculation();
+
+            // 委托事件处理到父元素
+            document.getElementById('rocket-list').addEventListener('change', function (e) {
+                if (e.target.classList.contains('rocket-type-select')) {
+                    updateConfigInputs();
+                }
+            });
+
+            // 初始化配置输入
+            updateConfigInputs();
+        });
+
+        // 初始化选项卡
+        function initTabs() {
+            const tabs = document.querySelectorAll('.tab');
+
+            tabs.forEach(tab => {
+                // 添加触摸事件
+                tab.addEventListener('touchstart', function (e) {
+                    this.classList.add('active-tap');
+                }, { passive: true });
+
+                tab.addEventListener('touchend', function (e) {
+                    this.classList.remove('active-tap');
+                    const index = parseInt(this.getAttribute('data-index'));
+                    switchTab(index);
+                }, { passive: true });
+
+                // 添加鼠标事件
+                tab.addEventListener('click', function () {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    switchTab(index);
+                });
+            });
+        }
+
+        // 更新滚动指示器
+        function updateScrollIndicator() {
+            const tabsContainer = document.getElementById('tabs-container');
+            const scrollIndicator = document.getElementById('scroll-indicator');
+
+            if (!tabsContainer || !scrollIndicator) return;
+
+            const scrollWidth = tabsContainer.scrollWidth - tabsContainer.clientWidth;
+            const scrollPercentage = scrollWidth > 0 ? (tabsContainer.scrollLeft / scrollWidth) : 0;
+
+            const indicatorMaxWidth = tabsContainer.clientWidth * 0.5;
+            const indicatorWidth = Math.max(30, indicatorMaxWidth * (tabsContainer.clientWidth / tabsContainer.scrollWidth));
+
+            scrollIndicator.style.width = `${indicatorWidth}px`;
+            scrollIndicator.style.left = `${scrollPercentage * (tabsContainer.clientWidth - indicatorWidth)}px`;
+
+            if (scrollWidth > 10) {
+                scrollIndicator.style.opacity = '0.7';
+            } else {
+                scrollIndicator.style.opacity = '0';
+            }
+        }
+
+        // 切换标签页
+        function switchTab(index) {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            document.querySelectorAll('.tab')[index].classList.add('active');
+            document.querySelectorAll('.tab-content')[index].classList.add('active');
+
+            if (index === 0) {
+                updateResearchResults();
+            } else if (index === 2) {
+                updateManufacturingCalculation();
+            } else if (index === 3) {
+                updateLaunchCalculation();
+            }
+        }
+
+        // 切换火箭特定字段的显示
+        function toggleRocketSpecificFields() {
+            const type = document.getElementById('rocket-type-basic').value;
+            const rocketSpecificFields = document.getElementById('rocket-specific-fields');
+
+            if (type === 'fuel') {
+                rocketSpecificFields.style.display = 'none';
+            } else {
+                rocketSpecificFields.style.display = 'block';
+            }
+
+            // 无论选择什么类型，都加载对应的数据
+            loadRocketData();
+        }
+
+        // 加载火箭数据到表单
+        function loadRocketData() {
+            const type = document.getElementById('rocket-type-basic').value;
+            const data = rocketData[type];
+
+            document.getElementById('q0-cost').value = data.q0;
+            document.getElementById('quality-add').value = data.qualityAdd;
+            document.getElementById('time-per-h').value = data.timePerH;
+            document.getElementById('time-cost').value = data.timeCost;
+
+            if (type !== 'fuel') {
+                document.getElementById('launch-time').value = data.launchTime;
+                document.getElementById('fuel-consumption').value = data.fuelConsumption;
+                document.getElementById('expected-research').value = data.expectedResearch;
+            }
+        }
+
+        // 保存火箭数据
+        function saveRocketData() {
+            const type = document.getElementById('rocket-type-basic').value;
+
+            const newData = {
+                q0: parseFloat(document.getElementById('q0-cost').value),
+                qualityAdd: parseFloat(document.getElementById('quality-add').value),
+                timePerH: parseFloat(document.getElementById('time-per-h').value),
+                timeCost: parseFloat(document.getElementById('time-cost').value)
+            };
+
+            if (type !== 'fuel') {
+                newData.launchTime = parseFloat(document.getElementById('launch-time').value);
+                newData.fuelConsumption = parseFloat(document.getElementById('fuel-consumption').value);
+                newData.expectedResearch = parseFloat(document.getElementById('expected-research').value);
+            }
+
+            rocketData[type] = newData;
+            localStorage.setItem('rocketData', JSON.stringify(rocketData));
+
+            // 显示保存成功的反馈
+            const saveButton = document.querySelector('button:not([onclick="saveResearchData()"]):not([onclick="calculateProfit()"])');
+            const originalText = saveButton.innerHTML;
+            saveButton.innerHTML = '<i class="fas fa-check"></i> 保存成功';
+            saveButton.style.background = '#38B2AC';
+
+            setTimeout(() => {
+                saveButton.innerHTML = originalText;
+                saveButton.style.background = '';
+            }, 1500);
+        }
+
+        // 加载科研数据到表单
+        function loadResearchData() {
+            document.getElementById('basic-math-level').value = researchData.basicMath;
+            document.getElementById('manufacturing-level').value = researchData.manufacturing;
+            document.getElementById('propulsion-level').value = researchData.propulsion;
+            document.getElementById('orbital-level').value = researchData.orbital;
+            document.getElementById('attitude-level').value = researchData.attitude;
+        }
+
+        // 保存科研数据
+        function saveResearchData() {
+            researchData.basicMath = parseInt(document.getElementById('basic-math-level').value);
+            researchData.manufacturing = parseInt(document.getElementById('manufacturing-level').value);
+            researchData.propulsion = parseInt(document.getElementById('propulsion-level').value);
+            researchData.orbital = parseInt(document.getElementById('orbital-level').value);
+            researchData.attitude = parseInt(document.getElementById('attitude-level').value);
+
+            localStorage.setItem('researchData', JSON.stringify(researchData));
+            updateResearchResults();
+
+            // 显示保存成功的反馈
+            const saveButton = document.querySelector('button[onclick="saveResearchData()"]');
+            const originalText = saveButton.innerHTML;
+            saveButton.innerHTML = '<i class="fas fa-check"></i> 保存成功';
+            saveButton.style.background = '#38B2AC';
+
+            setTimeout(() => {
+                saveButton.innerHTML = originalText;
+                saveButton.style.background = '';
+            }, 1500);
+        }
+
+        // 更新研究效果显示
+        function updateResearchResults() {
+            const basicMath = researchData.basicMath;
+            const manufacturing = researchData.manufacturing;
+            const propulsion = researchData.propulsion;
+            const orbital = researchData.orbital;
+            const attitude = researchData.attitude;
+
+            const productionSpeedBoost = manufacturing * 0.02;
+            const researchEfficiencyBoost = basicMath * 0.02;
+            const suborbitalProduction = basicMath * 0.2 + manufacturing * 0.2 + propulsion * 0.3 + orbital * 0.1 + attitude * 0.2;
+            const orbitalProduction = basicMath * 0.15 + manufacturing * 0.15 + propulsion * 0.3 + orbital * 0.2 + attitude * 0.2;
+            const suborbitalKnowledge = basicMath * 0.3 + propulsion * 0.3 + orbital * 0.1 + attitude * 0.3;
+            const orbitalKnowledge = basicMath * 0.2 + propulsion * 0.2 + orbital * 0.35 + attitude * 0.25;
+
+            animateValue('production-speed-boost', productionSpeedBoost.toFixed(2));
+            animateValue('research-efficiency-boost', researchEfficiencyBoost.toFixed(2));
+            animateValue('suborbital-production', suborbitalProduction.toFixed(2));
+            animateValue('orbital-production', orbitalProduction.toFixed(2));
+            animateValue('suborbital-knowledge', suborbitalKnowledge.toFixed(2));
+            animateValue('orbital-knowledge', orbitalKnowledge.toFixed(2));
+
+            // 更新制造计算中的最高品质
+            updateManufacturingCalculation();
+            // 更新发射计算中的最高品质
+            updateLaunchCalculation();
+        }
+
+        // 添加数值变化动画
+        function animateValue(elementId, newValue) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+
+            const oldValue = element.textContent;
+
+            if (oldValue !== newValue) {
+                element.textContent = newValue;
+                element.classList.add('value-changed');
+
+                setTimeout(() => {
+                    element.classList.remove('value-changed');
+                }, 500);
+            }
+        }
+
+        // 计算可制造最高品质
+        function calculateMaxQuality(rocketType) {
+            const suborbitalProduction = parseFloat(document.getElementById('suborbital-production').textContent);
+            const orbitalProduction = parseFloat(document.getElementById('orbital-production').textContent);
+
+            let maxQuality = 0;
+
+            switch (rocketType) {
+                case 'sr':
+                    maxQuality = Math.floor(suborbitalProduction * 2.5);
+                    break;
+                case 'slv':
+                    maxQuality = Math.floor(orbitalProduction * 2);
+                    break;
+                case 'mlv':
+                    maxQuality = Math.floor(orbitalProduction * 1.5);
+                    break;
+                case 'llv':
+                    maxQuality = Math.floor(orbitalProduction * 1);
+                    break;
+                case 'hlv':
+                    maxQuality = Math.floor(orbitalProduction * 0.75);
+                    break;
+            }
+
+            return maxQuality;
+        }
+
+        // 更新制造计算
+        function updateManufacturingCalculation() {
+            const rocketType = document.getElementById('manufacture-rocket-type').value;
+            const qLevel = parseInt(document.getElementById('manufacture-q-level').value);
+
+            const rocket = rocketData[rocketType];
+
+            // 计算最高品质
+            const maxQuality = calculateMaxQuality(rocketType);
+            document.getElementById('max-quality').textContent = 'Q' + maxQuality;
+
+            // 计算制造成本
+            const qCost = rocket.q0 + rocket.qualityAdd * qLevel;
+            const manufactureTime = rocket.timePerH;
+            const manufactureCost = qCost + rocket.timeCost * rocket.timePerH;
+
+            // 更新显示（按指定顺序）
+            animateValue('manufacture-q0-cost', rocket.q0.toFixed(2) + ' $');
+            animateValue('manufacture-quality-cost', (rocket.qualityAdd * qLevel).toFixed(2) + ' $');
+            animateValue('manufacture-time-cost', rocket.timeCost.toFixed(2) + ' $');
+            animateValue('manufacture-time', manufactureTime.toFixed(2) + ' H');
+            animateValue('manufacture-q-cost', qCost.toFixed(2) + ' $');
+            animateValue('manufacture-cost', manufactureCost.toFixed(2) + ' $');
+        }
+
+        // 计算发射成功率
+        function calculateSuccessRate(rocketType, qLevel) {
+            let exponent;
+
+            if (rocketType === 'sr') {
+                // SR探空火箭公式：1/[2^(1+0.7*Q+0.3*亚轨道火箭发射专业知识)]
+                const suborbitalKnowledge = parseFloat(document.getElementById('suborbital-knowledge').textContent);
+                exponent = 1 + 0.7 * qLevel + 0.3 * suborbitalKnowledge;
+            } else {
+                // 其他火箭公式：1/[2^(1+0.7*Q+0.3*运载火箭发射专业知识)]
+                const orbitalKnowledge = parseFloat(document.getElementById('orbital-knowledge').textContent);
+                exponent = 1 + 0.7 * qLevel + 0.3 * orbitalKnowledge;
+            }
+
+            const successRate = (1 - 1 / Math.pow(2, exponent)) * 100;
+            return successRate;
+        }
+
+        // 更新火箭发射数据
+        function updateLaunchCalculation() {
+            const rocketType = document.getElementById('launch-rocket-type').value;
+            const qLevel = parseInt(document.getElementById('launch-q-level').value);
+
+            const rocket = rocketData[rocketType];
+            const fuelData = rocketData.fuel;
+
+            // 计算最高品质并更新显示
+            const maxQuality = calculateMaxQuality(rocketType);
+            document.getElementById('launch-max-quality').textContent = 'Q' + maxQuality;
+
+            const successRate = calculateSuccessRate(rocketType, qLevel);
+            const rocketCost = rocket.q0 + rocket.qualityAdd * qLevel + rocket.timeCost * rocket.timePerH;
+            const fuelCost = fuelData.q0 + fuelData.qualityAdd * qLevel + fuelData.timeCost * fuelData.timePerH;
+            const totalFuelCost = fuelCost * rocket.fuelConsumption;
+            const launchTimeCost = rocket.timeCost * rocket.launchTime;
+            const totalLaunchCost = rocketCost + totalFuelCost + launchTimeCost;
+            const researchGained = successRate / 100 * rocket.expectedResearch;
+            const researchCost = researchGained > 0 ? totalLaunchCost / researchGained : 0;
+
+            // 更新显示
+            animateValue('launch-fuel-display', rocket.fuelConsumption);
+            animateValue('launch-salary', rocket.timeCost.toFixed(2) + ' $');
+            animateValue('launch-time-display', rocket.launchTime.toFixed(2) + ' H');
+            animateValue('launch-cost', totalLaunchCost.toFixed(2) + ' $');
+            animateValue('launch-success-rate', successRate.toFixed(2) + '%');
+            animateValue('research-gained', researchGained.toFixed(2));
+            animateValue('research-cost', researchCost.toFixed(2) + ' $/单位');
+        }
+
+        // 添加火箭项目
+        function addRocketItem() {
+            const rocketList = document.getElementById('rocket-list');
+            const rocketCount = rocketList.children.length + 1;
+
+            const rocketItem = document.createElement('div');
+            rocketItem.className = 'rocket-item';
+            rocketItem.innerHTML = `
+                <div class="rocket-item-header">
+                    <span>火箭 #${rocketCount}</span>
+                    <button class="remove-rocket" onclick="removeRocketItem(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="rocket-item-content">
+                    <div class="form-group">
+                        <label>火箭类型</label>
+                        <select class="rocket-type-select">
+                            <option value="sr">SR探空火箭</option>
+                            <option value="slv">SLV小型运载火箭</option>
+                            <option value="mlv">MLV中型运载火箭</option>
+                            <option value="llv">LLV大型运载火箭</option>
+                            <option value="hlv">HLV重型运载火箭</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>订单单价 ($)</label>
+                        <input type="number" class="rocket-price" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>数量</label>
+                        <input type="number" class="rocket-quantity" value="1" min="1">
+                    </div>
+                </div>
+            `;
+
+            rocketList.appendChild(rocketItem);
+            updateConfigInputs();
+        }
+
+        // 删除火箭项目
+        function removeRocketItem(button) {
+            const rocketItem = button.closest('.rocket-item');
+            if (document.getElementById('rocket-list').children.length > 1) {
+                rocketItem.remove();
+                updateConfigInputs();
+
+                // 更新所有火箭项目的编号
+                document.querySelectorAll('.rocket-item-header span').forEach((span, index) => {
+                    span.textContent = `火箭 #${index + 1}`;
+                });
+            } else {
+                // 显示错误提示
+                alert('订单至少需要一种火箭类型');
+            }
+        }
+
+        // 计算所有品质组合
+        function calculateAllQualityCombinations() {
+            const rocketItems = document.querySelectorAll('.rocket-item');
+            if (rocketItems.length === 0) {
+                alert('请至少添加一种火箭类型');
+                return;
+            }
+
+            // 显示加载指示器
+            document.getElementById('calculation-loader').style.display = 'block';
+            document.getElementById('recommendation-result').style.display = 'none';
+            document.getElementById('results-container').style.display = 'none';
+
+            // 使用setTimeout让UI有机会更新
+            setTimeout(() => {
+                const qualityBonus = parseFloat(document.getElementById('quality-bonus').value) / 100;
+                const timeMode = document.getElementById('time-mode').value;
+
+                // 收集火箭信息
+                const rockets = [];
+                rocketItems.forEach((item, index) => {
+                    const rocketType = item.querySelector('.rocket-type-select').value;
+                    const rocketPrice = parseFloat(item.querySelector('.rocket-price').value);
+                    const quantity = parseInt(item.querySelector('.rocket-quantity').value);
+                    const maxQuality = calculateMaxQuality(rocketType);
+
+                    rockets.push({
+                        type: rocketType,
+                        price: rocketPrice,
+                        quantity: quantity,
+                        maxQuality: maxQuality,
+                        data: rocketData[rocketType]
+                    });
+                });
+
+                // 生成所有品质组合
+                const combinations = generateAllCombinations(rockets);
+
+                // 计算每个组合的利润
+                const results = [];
+                combinations.forEach(combination => {
+                    const result = calculateCombinationProfit(combination, rockets, qualityBonus, timeMode);
+                    results.push(result);
+                });
+
+                // 按利润从高到低排序
+                results.sort((a, b) => b.profit - a.profit);
+
+                // 显示结果
+                displayResults(results, rockets);
+
+                // 隐藏加载指示器
+                document.getElementById('calculation-loader').style.display = 'none';
+            }, 100);
+        }
+
+        // 生成所有品质组合
+        function generateAllCombinations(rockets) {
+            const combinations = [];
+
+            // 递归生成组合
+            function generate(current, index) {
+                if (index === rockets.length) {
+                    combinations.push([...current]);
+                    return;
+                }
+
+                const rocket = rockets[index];
+                for (let q = 0; q <= rocket.maxQuality; q++) {
+                    current[index] = q;
+                    generate(current, index + 1);
+                }
+            }
+
+            generate([], 0);
+            return combinations;
+        }
+
+        // 计算特定组合的利润
+        function calculateCombinationProfit(combination, rockets, qualityBonus, timeMode) {
+            let totalQCost = 0;
+            let totalTime = 0;
+            let totalCost = 0;
+            let totalAmount = 0;
+            let maxManufactureTime = 0;
+            let maxTimeRocketIndex = 0;
+
+            rockets.forEach((rocket, index) => {
+                const qLevel = combination[index];
+                const data = rocket.data;
+
+                // 计算加Q成本
+                const qCost = data.q0 + data.qualityAdd * qLevel;
+                totalQCost += qCost * rocket.quantity;
+
+                // 计算制造时间
+                const manufactureTime = data.timePerH;
+                if (manufactureTime > maxManufactureTime) {
+                    maxManufactureTime = manufactureTime;
+                    maxTimeRocketIndex = index;
+                }
+
+                // 计算制造成本（仅材料部分）
+                const materialCost = qCost * rocket.quantity;
+                totalCost += materialCost;
+
+                // 计算订单金额
+                const qPrice = rocket.price * (1 + qualityBonus * qLevel);
+                totalAmount += qPrice * rocket.quantity;
+            });
+
+            // 处理时间模式
+            if (timeMode === 'sum') {
+                // 叠加模式：加上所有火箭的时间成本
+                rockets.forEach((rocket, index) => {
+                    const data = rocket.data;
+                    totalCost += data.timeCost * data.timePerH * rocket.quantity;
+                    totalTime += data.timePerH * rocket.quantity;
+                });
+            } else if (timeMode === 'max') {
+                // 取最大值模式：只加上最长制造时间的时间成本
+                const maxRocket = rockets[maxTimeRocketIndex];
+                totalCost += maxRocket.data.timeCost * maxManufactureTime;
+                totalTime = maxManufactureTime;
+            }
+
+            const profit = totalAmount - totalCost;
+
+            return {
+                combination: combination,
+                totalQCost: totalQCost,
+                totalTime: totalTime,
+                totalCost: totalCost,
+                totalAmount: totalAmount,
+                profit: profit
+            };
+        }
+
+        // 显示计算结果
+        function displayResults(results, rockets) {
+            if (results.length === 0) return;
+
+            // 显示推荐组合（第一个，即利润最高的）
+            const bestResult = results[0];
+            displayRecommendation(bestResult, rockets);
+
+            // 显示结果列表
+            const resultsList = document.getElementById('results-list');
+            resultsList.innerHTML = '';
+
+            // 只显示前20个结果以避免性能问题
+            const displayCount = Math.min(results.length, 20);
+            for (let i = 0; i < displayCount; i++) {
+                const result = results[i];
+                const row = document.createElement('div');
+                row.className = i === 0 ? 'result-row best' : 'result-row';
+                row.onclick = () => toggleResultDetails(this);
+
+                const combinationText = getCombinationText(result.combination, rockets);
+
+                row.innerHTML = `
+                    <div class="result-combination">${combinationText}</div>
+                    <div class="result-profit">${result.profit.toFixed(2)} $</div>
+                `;
+
+                // 添加详情区域
+                const details = document.createElement('div');
+                details.className = 'result-details';
+                details.innerHTML = `
+                    <div class="result-item">
+                        <span>总加Q成本:</span>
+                        <span class="result-value">${result.totalQCost.toFixed(2)} $</span>
+                    </div>
+                    <div class="result-item">
+                        <span>总制造时间:</span>
+                        <span class="result-value">${result.totalTime.toFixed(2)} H</span>
+                    </div>
+                    <div class="result-item">
+                        <span>总制造成本:</span>
+                        <span class="result-value">${result.totalCost.toFixed(2)} $</span>
+                    </div>
+                    <div class="result-item">
+                        <span>订单总金额:</span>
+                        <span class="result-value">${result.totalAmount.toFixed(2)} $</span>
+                    </div>
+                `;
+
+                resultsList.appendChild(row);
+                resultsList.appendChild(details);
+
+                // 添加点击事件
+                row.onclick = (function (row, details) {
+                    return function () {
+                        // 隐藏所有详情
+                        document.querySelectorAll('.result-details').forEach(d => {
+                            d.classList.remove('active');
+                        });
+
+                        // 显示/隐藏当前详情
+                        details.classList.toggle('active');
+                    };
+                })(row, details);
+            }
+
+            document.getElementById('results-container').style.display = 'block';
+        }
+
+        // 显示推荐组合
+        function displayRecommendation(result, rockets) {
+            const combinationText = getCombinationText(result.combination, rockets);
+
+            document.getElementById('recommended-combination').innerHTML = combinationText;
+            document.getElementById('recommended-total-q-cost').textContent = result.totalQCost.toFixed(2) + ' $';
+            document.getElementById('recommended-total-time').textContent = result.totalTime.toFixed(2) + ' H';
+            document.getElementById('recommended-total-cost').textContent = result.totalCost.toFixed(2) + ' $';
+            document.getElementById('recommended-total-amount').textContent = result.totalAmount.toFixed(2) + ' $';
+            document.getElementById('recommended-total-profit').textContent = result.profit.toFixed(2) + ' $';
+
+            document.getElementById('recommendation-result').style.display = 'block';
+        }
+
+        // 获取组合文本表示
+        function getCombinationText(combination, rockets) {
+            let text = '';
+            rockets.forEach((rocket, index) => {
+                const qLevel = combination[index];
+                // 使用简写
+                let shortName;
+                switch (rocket.type) {
+                    case 'sr': shortName = 'SR'; break;
+                    case 'slv': shortName = 'SLV'; break;
+                    case 'mlv': shortName = 'MLV'; break;
+                    case 'llv': shortName = 'LLV'; break;
+                    case 'hlv': shortName = 'HLV'; break;
+                    default: shortName = rocket.type;
+                }
+
+                text += `<span class="rocket-short">${shortName} Q${qLevel}</span>`;
+                if (index < rockets.length - 1) {
+                    text += ' + ';
+                }
+            });
+            return text;
+        }
+
+        // 切换结果详情显示
+        function toggleResultDetails(element) {
+            // 这个函数由行点击事件处理
+        }
+
+        // 添加窗口调整大小时更新滚动指示器
+        window.addEventListener('resize', updateScrollIndicator);
+
+        // 添加选项卡容器滚动事件
+        const tabsContainer = document.getElementById('tabs-container');
+        if (tabsContainer) {
+            tabsContainer.addEventListener('scroll', updateScrollIndicator);
+        }
+    </script>
+</body>
+
+</html>
