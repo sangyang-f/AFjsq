@@ -1177,6 +1177,15 @@
         // 当前选择的火箭类型（订单计算页面）
         let currentRocket = 'sr';
 
+        // 浮点数精度修正函数
+        function fixFloatPrecision(num, precision = 10) {
+            if (typeof num !== 'number') return num;
+            // 处理极小值，将其视为0
+            if (Math.abs(num) < 1e-10) return 0;
+            // 使用toFixed并转回数字
+            return parseFloat(num.toFixed(precision));
+        }
+
         // 初始化函数
         document.addEventListener('DOMContentLoaded', function () {
             initTabs();
@@ -1298,10 +1307,10 @@
 
         // 将小时转换为中文时间格式
         function formatHoursToChinese(hours) {
-            const totalSeconds = hours * 3600;
+            const totalSeconds = fixFloatPrecision(hours * 3600);
             const h = Math.floor(totalSeconds / 3600);
             const m = Math.floor((totalSeconds % 3600) / 60);
-            const s = totalSeconds % 60;
+            const s = fixFloatPrecision(totalSeconds % 60);
 
             let result = '';
             if (h > 0) {
@@ -1312,7 +1321,9 @@
             }
 
             // 处理小数秒
-            if (s === Math.floor(s)) {
+            if (s === 0) {
+                result += '0秒';
+            } else if (s === Math.floor(s)) {
                 result += `${s}秒`;
             } else {
                 // 保留1位小数
@@ -1324,7 +1335,7 @@
 
         // 将HMS格式转换为小时
         function formatHMSToHours(hours, minutes, seconds) {
-            return hours + (minutes / 60) + (seconds / 3600);
+            return fixFloatPrecision(hours + (minutes / 60) + (seconds / 3600));
         }
 
         // 加载火箭数据到表单
@@ -1335,11 +1346,11 @@
             document.getElementById('q0-cost').value = data.q0;
             document.getElementById('quality-add').value = data.qualityAdd;
 
-            // 将小时转换为HMS格式 - 修复：不使用Math.round
-            const totalSeconds = data.timePerH * 3600;
+            // 将小时转换为HMS格式 - 使用精度修正
+            const totalSeconds = fixFloatPrecision(data.timePerH * 3600);
             const h = Math.floor(totalSeconds / 3600);
             const m = Math.floor((totalSeconds % 3600) / 60);
-            const s = totalSeconds % 60;
+            const s = fixFloatPrecision(totalSeconds % 60);
 
             document.getElementById('time-per-h-h').value = h;
             document.getElementById('time-per-h-m').value = m;
@@ -1348,10 +1359,10 @@
             document.getElementById('time-cost').value = data.timeCost;
 
             if (type !== 'fuel') {
-                const launchTotalSeconds = data.launchTime * 3600;
+                const launchTotalSeconds = fixFloatPrecision(data.launchTime * 3600);
                 const launchH = Math.floor(launchTotalSeconds / 3600);
                 const launchM = Math.floor((launchTotalSeconds % 3600) / 60);
-                const launchS = launchTotalSeconds % 60;
+                const launchS = fixFloatPrecision(launchTotalSeconds % 60);
 
                 document.getElementById('launch-time-h').value = launchH;
                 document.getElementById('launch-time-m').value = launchM;
