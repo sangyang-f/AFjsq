@@ -1110,56 +1110,56 @@
     </div>
 
     <script>
-        // 成本数据存储
+        // 成本数据存储 - 修改为直接存储HMS格式
         let rocketData = {
             fuel: {
                 q0: 280,
                 qualityAdd: 0,
-                timePerH: 0.0041667, // 15秒
+                timePerH: { h: 0, m: 0, s: 15 }, // 直接存储HMS格式
                 timeCost: 2000
             },
             sr: {
                 q0: 50000,
                 qualityAdd: 1000,
-                timePerH: 0.5, // 30分钟
+                timePerH: { h: 0, m: 30, s: 0 }, // 直接存储HMS格式
                 timeCost: 2500,
-                launchTime: 0.25, // 15分钟
+                launchTime: { h: 0, m: 15, s: 0 }, // 直接存储HMS格式
                 fuelConsumption: 30,
                 expectedResearch: 260
             },
             slv: {
                 q0: 160000,
                 qualityAdd: 3200,
-                timePerH: 2, // 2小时
+                timePerH: { h: 2, m: 0, s: 0 }, // 直接存储HMS格式
                 timeCost: 2500,
-                launchTime: 0.5, // 30分钟
+                launchTime: { h: 0, m: 30, s: 0 }, // 直接存储HMS格式
                 fuelConsumption: 70,
                 expectedResearch: 800
             },
             mlv: {
                 q0: 500000,
                 qualityAdd: 10000,
-                timePerH: 4, // 4小时
+                timePerH: { h: 4, m: 0, s: 0 }, // 直接存储HMS格式
                 timeCost: 2600,
-                launchTime: 1, // 1小时
+                launchTime: { h: 1, m: 0, s: 0 }, // 直接存储HMS格式
                 fuelConsumption: 175,
                 expectedResearch: 2400
             },
             llv: {
                 q0: 1150000,
                 qualityAdd: 23000,
-                timePerH: 10, // 10小时
+                timePerH: { h: 10, m: 0, s: 0 }, // 直接存储HMS格式
                 timeCost: 2600,
-                launchTime: 3, // 3小时
+                launchTime: { h: 3, m: 0, s: 0 }, // 直接存储HMS格式
                 fuelConsumption: 280,
                 expectedResearch: 5400
             },
             hlv: {
                 q0: 1600000,
                 qualityAdd: 32000,
-                timePerH: 18, // 18小时
+                timePerH: { h: 18, m: 0, s: 0 }, // 直接存储HMS格式
                 timeCost: 2800,
-                launchTime: 5, // 5小时
+                launchTime: { h: 5, m: 0, s: 0 }, // 直接存储HMS格式
                 fuelConsumption: 500,
                 expectedResearch: 7800
             }
@@ -1177,13 +1177,61 @@
         // 当前选择的火箭类型（订单计算页面）
         let currentRocket = 'sr';
 
-        // 浮点数精度修正函数
-        function fixFloatPrecision(num, precision = 10) {
-            if (typeof num !== 'number') return num;
-            // 处理极小值，将其视为0
-            if (Math.abs(num) < 1e-10) return 0;
-            // 使用toFixed并转回数字
-            return parseFloat(num.toFixed(precision));
+        // 将HMS格式转换为小时
+        function hmsToHours(hms) {
+            return hms.h + (hms.m / 60) + (hms.s / 3600);
+        }
+
+        // 将小时转换为中文时间格式
+        function formatHoursToChinese(hours) {
+            // 如果传入的是HMS对象，直接格式化
+            if (typeof hours === 'object' && hours.h !== undefined) {
+                let result = '';
+                if (hours.h > 0) {
+                    result += `${hours.h}小时 `;
+                }
+                if (hours.m > 0 || hours.h > 0) {
+                    result += `${hours.m}分钟 `;
+                }
+
+                // 处理小数秒
+                if (hours.s === 0) {
+                    result += '0秒';
+                } else if (hours.s === Math.floor(hours.s)) {
+                    result += `${hours.s}秒`;
+                } else {
+                    // 保留1位小数
+                    result += `${hours.s.toFixed(1)}秒`;
+                }
+
+                return result;
+            }
+
+            // 如果传入的是小时数，转换为HMS格式
+            const totalSeconds = hours * 3600;
+            const h = Math.floor(totalSeconds / 3600);
+            const m = Math.floor((totalSeconds % 3600) / 60);
+            const s = totalSeconds % 60;
+
+            let result = '';
+            if (h > 0) {
+                result += `${h}小时 `;
+            }
+            if (m > 0 || h > 0) {
+                result += `${m}分钟 `;
+            }
+
+            // 处理小数秒
+            if (s === 0) {
+                result += '0秒';
+            } else if (s === Math.floor(s)) {
+                result += `${s}秒`;
+            } else {
+                // 保留1位小数
+                result += `${s.toFixed(1)}秒`;
+            }
+
+            return result;
         }
 
         // 初始化函数
@@ -1194,7 +1242,33 @@
             // 加载保存的数据
             const savedRocketData = localStorage.getItem('rocketData');
             if (savedRocketData) {
-                rocketData = JSON.parse(savedRocketData);
+                // 解析保存的数据，确保时间格式正确
+                const parsedData = JSON.parse(savedRocketData);
+
+                // 如果数据是旧的浮点数格式，转换为新的HMS格式
+                for (const type in parsedData) {
+                    if (parsedData[type].timePerH && typeof parsedData[type].timePerH === 'number') {
+                        // 转换旧的浮点数格式为HMS格式
+                        const totalSeconds = parsedData[type].timePerH * 3600;
+                        parsedData[type].timePerH = {
+                            h: Math.floor(totalSeconds / 3600),
+                            m: Math.floor((totalSeconds % 3600) / 60),
+                            s: totalSeconds % 60
+                        };
+                    }
+
+                    if (parsedData[type].launchTime && typeof parsedData[type].launchTime === 'number') {
+                        // 转换旧的浮点数格式为HMS格式
+                        const totalSeconds = parsedData[type].launchTime * 3600;
+                        parsedData[type].launchTime = {
+                            h: Math.floor(totalSeconds / 3600),
+                            m: Math.floor((totalSeconds % 3600) / 60),
+                            s: totalSeconds % 60
+                        };
+                    }
+                }
+
+                rocketData = parsedData;
             }
 
             const savedResearchData = localStorage.getItem('researchData');
@@ -1305,39 +1379,6 @@
             loadRocketData();
         }
 
-        // 将小时转换为中文时间格式
-        function formatHoursToChinese(hours) {
-            const totalSeconds = fixFloatPrecision(hours * 3600);
-            const h = Math.floor(totalSeconds / 3600);
-            const m = Math.floor((totalSeconds % 3600) / 60);
-            const s = fixFloatPrecision(totalSeconds % 60);
-
-            let result = '';
-            if (h > 0) {
-                result += `${h}小时 `;
-            }
-            if (m > 0 || h > 0) {
-                result += `${m}分钟 `;
-            }
-
-            // 处理小数秒
-            if (s === 0) {
-                result += '0秒';
-            } else if (s === Math.floor(s)) {
-                result += `${s}秒`;
-            } else {
-                // 保留1位小数
-                result += `${s.toFixed(1)}秒`;
-            }
-
-            return result;
-        }
-
-        // 将HMS格式转换为小时
-        function formatHMSToHours(hours, minutes, seconds) {
-            return fixFloatPrecision(hours + (minutes / 60) + (seconds / 3600));
-        }
-
         // 加载火箭数据到表单
         function loadRocketData() {
             const type = document.getElementById('rocket-type-basic').value;
@@ -1346,27 +1387,17 @@
             document.getElementById('q0-cost').value = data.q0;
             document.getElementById('quality-add').value = data.qualityAdd;
 
-            // 将小时转换为HMS格式 - 使用精度修正
-            const totalSeconds = fixFloatPrecision(data.timePerH * 3600);
-            const h = Math.floor(totalSeconds / 3600);
-            const m = Math.floor((totalSeconds % 3600) / 60);
-            const s = fixFloatPrecision(totalSeconds % 60);
-
-            document.getElementById('time-per-h-h').value = h;
-            document.getElementById('time-per-h-m').value = m;
-            document.getElementById('time-per-h-s').value = s;
+            // 直接使用存储的HMS格式数据
+            document.getElementById('time-per-h-h').value = data.timePerH.h;
+            document.getElementById('time-per-h-m').value = data.timePerH.m;
+            document.getElementById('time-per-h-s').value = data.timePerH.s;
 
             document.getElementById('time-cost').value = data.timeCost;
 
             if (type !== 'fuel') {
-                const launchTotalSeconds = fixFloatPrecision(data.launchTime * 3600);
-                const launchH = Math.floor(launchTotalSeconds / 3600);
-                const launchM = Math.floor((launchTotalSeconds % 3600) / 60);
-                const launchS = fixFloatPrecision(launchTotalSeconds % 60);
-
-                document.getElementById('launch-time-h').value = launchH;
-                document.getElementById('launch-time-m').value = launchM;
-                document.getElementById('launch-time-s').value = launchS;
+                document.getElementById('launch-time-h').value = data.launchTime.h;
+                document.getElementById('launch-time-m').value = data.launchTime.m;
+                document.getElementById('launch-time-s').value = data.launchTime.s;
 
                 document.getElementById('fuel-consumption').value = data.fuelConsumption;
                 document.getElementById('expected-research').value = data.expectedResearch;
@@ -1377,11 +1408,12 @@
         function saveRocketData() {
             const type = document.getElementById('rocket-type-basic').value;
 
-            // 获取HMS格式的时间并转换为小时
-            const timeH = parseFloat(document.getElementById('time-per-h-h').value) || 0;
-            const timeM = parseFloat(document.getElementById('time-per-h-m').value) || 0;
-            const timeS = parseFloat(document.getElementById('time-per-h-s').value) || 0;
-            const timePerH = formatHMSToHours(timeH, timeM, timeS);
+            // 直接保存HMS格式数据
+            const timePerH = {
+                h: parseInt(document.getElementById('time-per-h-h').value) || 0,
+                m: parseInt(document.getElementById('time-per-h-m').value) || 0,
+                s: parseFloat(document.getElementById('time-per-h-s').value) || 0
+            };
 
             const newData = {
                 q0: parseFloat(document.getElementById('q0-cost').value),
@@ -1391,10 +1423,11 @@
             };
 
             if (type !== 'fuel') {
-                const launchH = parseFloat(document.getElementById('launch-time-h').value) || 0;
-                const launchM = parseFloat(document.getElementById('launch-time-m').value) || 0;
-                const launchS = parseFloat(document.getElementById('launch-time-s').value) || 0;
-                const launchTime = formatHMSToHours(launchH, launchM, launchS);
+                const launchTime = {
+                    h: parseInt(document.getElementById('launch-time-h').value) || 0,
+                    m: parseInt(document.getElementById('launch-time-m').value) || 0,
+                    s: parseFloat(document.getElementById('launch-time-s').value) || 0
+                };
 
                 newData.launchTime = launchTime;
                 newData.fuelConsumption = parseFloat(document.getElementById('fuel-consumption').value);
@@ -1534,14 +1567,14 @@
 
             // 计算制造成本
             const qCost = rocket.q0 + rocket.qualityAdd * qLevel;
-            const manufactureTime = rocket.timePerH;
-            const manufactureCost = qCost + rocket.timeCost * rocket.timePerH;
+            const manufactureTimeHours = hmsToHours(rocket.timePerH);
+            const manufactureCost = qCost + rocket.timeCost * manufactureTimeHours;
 
             // 更新显示（按指定顺序）
             animateValue('manufacture-q0-cost', rocket.q0.toFixed(2) + ' $');
             animateValue('manufacture-quality-cost', (rocket.qualityAdd * qLevel).toFixed(2) + ' $');
             animateValue('manufacture-time-cost', rocket.timeCost.toFixed(2) + ' $');
-            animateValue('manufacture-time', formatHoursToChinese(manufactureTime));
+            animateValue('manufacture-time', formatHoursToChinese(rocket.timePerH));
             animateValue('manufacture-q-cost', qCost.toFixed(2) + ' $');
             animateValue('manufacture-cost', manufactureCost.toFixed(2) + ' $');
         }
@@ -1577,10 +1610,10 @@
             document.getElementById('launch-max-quality').textContent = 'Q' + maxQuality;
 
             const successRate = calculateSuccessRate(rocketType, qLevel);
-            const rocketCost = rocket.q0 + rocket.qualityAdd * qLevel + rocket.timeCost * rocket.timePerH;
-            const fuelCost = fuelData.q0 + fuelData.qualityAdd * qLevel + fuelData.timeCost * fuelData.timePerH;
+            const rocketCost = rocket.q0 + rocket.qualityAdd * qLevel + rocket.timeCost * hmsToHours(rocket.timePerH);
+            const fuelCost = fuelData.q0 + fuelData.qualityAdd * qLevel + fuelData.timeCost * hmsToHours(fuelData.timePerH);
             const totalFuelCost = fuelCost * rocket.fuelConsumption;
-            const launchTimeCost = rocket.timeCost * rocket.launchTime;
+            const launchTimeCost = rocket.timeCost * hmsToHours(rocket.launchTime);
             const totalLaunchCost = rocketCost + totalFuelCost + launchTimeCost;
             const researchGained = successRate / 100 * rocket.expectedResearch;
             const researchCost = researchGained > 0 ? totalLaunchCost / researchGained : 0;
@@ -1747,8 +1780,8 @@
                 const qCost = data.q0 + data.qualityAdd * qLevel;
                 totalQCost += qCost * rocket.quantity;
 
-                // 计算制造时间
-                const manufactureTime = data.timePerH;
+                // 计算制造时间（转换为小时）
+                const manufactureTime = hmsToHours(data.timePerH);
                 if (manufactureTime > maxManufactureTime) {
                     maxManufactureTime = manufactureTime;
                     maxTimeRocketIndex = index;
@@ -1768,8 +1801,8 @@
                 // 叠加模式：加上所有火箭的时间成本
                 rockets.forEach((rocket, index) => {
                     const data = rocket.data;
-                    totalCost += data.timeCost * data.timePerH * rocket.quantity;
-                    totalTime += data.timePerH * rocket.quantity;
+                    totalCost += data.timeCost * hmsToHours(data.timePerH) * rocket.quantity;
+                    totalTime += hmsToHours(data.timePerH) * rocket.quantity;
                 });
             } else if (timeMode === 'max') {
                 // 取最大值模式：只加上最长制造时间的时间成本
