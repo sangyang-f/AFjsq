@@ -830,7 +830,7 @@
                     </div>
                     <div class="form-group">
                         <label for="time-per-h-s">秒</label>
-                        <input type="number" id="time-per-h-s" value="0" min="0" max="59">
+                        <input type="number" id="time-per-h-s" value="15" min="0" max="59" step="0.1">
                     </div>
                 </div>
             </div>
@@ -855,7 +855,7 @@
                         </div>
                         <div class="form-group">
                             <label for="launch-time-s">秒</label>
-                            <input type="number" id="launch-time-s" value="0" min="0" max="59">
+                            <input type="number" id="launch-time-s" value="0" min="0" max="59" step="0.1">
                         </div>
                     </div>
                 </div>
@@ -1298,7 +1298,7 @@
 
         // 将小时转换为中文时间格式
         function formatHoursToChinese(hours) {
-            const totalSeconds = Math.round(hours * 3600);
+            const totalSeconds = hours * 3600;
             const h = Math.floor(totalSeconds / 3600);
             const m = Math.floor((totalSeconds % 3600) / 60);
             const s = totalSeconds % 60;
@@ -1310,7 +1310,14 @@
             if (m > 0 || h > 0) {
                 result += `${m}分钟 `;
             }
-            result += `${s}秒`;
+
+            // 处理小数秒
+            if (s === Math.floor(s)) {
+                result += `${s}秒`;
+            } else {
+                // 保留1位小数
+                result += `${s.toFixed(1)}秒`;
+            }
 
             return result;
         }
@@ -1328,8 +1335,8 @@
             document.getElementById('q0-cost').value = data.q0;
             document.getElementById('quality-add').value = data.qualityAdd;
 
-            // 将小时转换为HMS格式
-            const totalSeconds = Math.round(data.timePerH * 3600);
+            // 将小时转换为HMS格式 - 修复：不使用Math.round
+            const totalSeconds = data.timePerH * 3600;
             const h = Math.floor(totalSeconds / 3600);
             const m = Math.floor((totalSeconds % 3600) / 60);
             const s = totalSeconds % 60;
@@ -1341,7 +1348,7 @@
             document.getElementById('time-cost').value = data.timeCost;
 
             if (type !== 'fuel') {
-                const launchTotalSeconds = Math.round(data.launchTime * 3600);
+                const launchTotalSeconds = data.launchTime * 3600;
                 const launchH = Math.floor(launchTotalSeconds / 3600);
                 const launchM = Math.floor((launchTotalSeconds % 3600) / 60);
                 const launchS = launchTotalSeconds % 60;
@@ -1360,9 +1367,9 @@
             const type = document.getElementById('rocket-type-basic').value;
 
             // 获取HMS格式的时间并转换为小时
-            const timeH = parseInt(document.getElementById('time-per-h-h').value) || 0;
-            const timeM = parseInt(document.getElementById('time-per-h-m').value) || 0;
-            const timeS = parseInt(document.getElementById('time-per-h-s').value) || 0;
+            const timeH = parseFloat(document.getElementById('time-per-h-h').value) || 0;
+            const timeM = parseFloat(document.getElementById('time-per-h-m').value) || 0;
+            const timeS = parseFloat(document.getElementById('time-per-h-s').value) || 0;
             const timePerH = formatHMSToHours(timeH, timeM, timeS);
 
             const newData = {
@@ -1373,9 +1380,9 @@
             };
 
             if (type !== 'fuel') {
-                const launchH = parseInt(document.getElementById('launch-time-h').value) || 0;
-                const launchM = parseInt(document.getElementById('launch-time-m').value) || 0;
-                const launchS = parseInt(document.getElementById('launch-time-s').value) || 0;
+                const launchH = parseFloat(document.getElementById('launch-time-h').value) || 0;
+                const launchM = parseFloat(document.getElementById('launch-time-m').value) || 0;
+                const launchS = parseFloat(document.getElementById('launch-time-s').value) || 0;
                 const launchTime = formatHMSToHours(launchH, launchM, launchS);
 
                 newData.launchTime = launchTime;
